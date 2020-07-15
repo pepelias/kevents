@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	kqueue "github.com/pepelias/kernel/kqueue/client"
+	kevents "github.com/pepelias/kernel/kevents/client"
 	"github.com/pepelias/tocopicadas/controllers/response"
 )
 
@@ -92,7 +92,7 @@ func suscribeRequest(c echo.Context) error {
 
 // Crear por HTTP
 func createRequest(c echo.Context) error {
-	observable := &kqueue.Observable{}
+	observable := &kevents.Observable{}
 	err := json.NewDecoder(c.Request().Body).Decode(observable)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.Model{
@@ -169,7 +169,7 @@ func dispatchRequest(c echo.Context) error {
 	}
 
 	// Seteamos el observable
-	observable := &kqueue.Observable{
+	observable := &kevents.Observable{
 		Name:  own["name"].(string),
 		Email: own["email"].(string),
 		Addr:  own["address"].(string),

@@ -31,8 +31,8 @@ var events = map[string][]func(map[string]interface{}){}
 // Me Emisor del evento. (Mismos datos del creador del evento)
 var Me = &Observable{}
 
-// Destination es la dirección del manejador de eventos
-var Destination = "http://localhost:8080/"
+// ServerAddr es la dirección del manejador de eventos
+var ServerAddr = "http://localhost:8080/"
 
 // ListenHandler debe ponerse en el endpint de escucha de eventos
 func ListenHandler(w http.ResponseWriter, r *http.Request) (int, error) {
@@ -79,7 +79,7 @@ func Notify(event string, message interface{}) error {
 		Timeout: time.Duration(5 * time.Second),
 	}
 	// Petición
-	req, err := http.NewRequest("POST", Destination+event, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", ServerAddr+event, bytes.NewBuffer(requestBody))
 	// Headers
 	req.Header.Set("Content-type", "Application/Json")
 	if err != nil {

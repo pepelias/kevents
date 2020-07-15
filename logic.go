@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	kqueue "github.com/pepelias/kernel/kqueue/client"
+	kqueue "github.com/pepelias/kernel/kevents/client"
 )
 
 // Event es una cola de mensajes
