@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	kqueue "github.com/pepelias/kernel/kqueue/client"
 )
 
 // Event es una cola de mensajes
 type Event struct {
 	Name       string
-	Observable *Observable
+	Observable *kqueue.Observable
 	Observers  []*Observer
 	Createat   time.Time
 }
@@ -25,14 +27,6 @@ type Observer struct {
 	NotifyAddr string                   `json:"notify_address,omitempty"`
 	Email      string                   `json:"email"`
 	Queue      []map[string]interface{} `json:"queue,omitempty"`
-}
-
-// Observable .
-type Observable struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Addr  string `json:"address"`
-	Token string `json:"token,omitempty"`
 }
 
 // Events son colas indexadas
@@ -48,7 +42,7 @@ func Suscribe(event string, o *Observer) error {
 }
 
 // CreateEvent .
-func CreateEvent(event string, own *Observable) error {
+func CreateEvent(event string, own *kqueue.Observable) error {
 	if own == nil {
 		return fmt.Errorf("Se necesita un observable")
 	}
@@ -69,7 +63,7 @@ func CreateEvent(event string, own *Observable) error {
 }
 
 // Dispatch .
-func Dispatch(event string, data map[string]interface{}, own *Observable) error {
+func Dispatch(event string, data map[string]interface{}, own *kqueue.Observable) error {
 	if Events[event] == nil {
 		return fmt.Errorf("No hay suscritos al evento")
 	}
@@ -110,7 +104,7 @@ func (q *Event) NotifyObservers(data map[string]interface{}) {
 
 // Notify .
 func (o *Observer) Notify(message map[string]interface{}) error {
-	// fmt.Printf("%q notificó a %q con el mensaje: %q", message["origin"].(*Observable).Name, o.Name, message["message"].(string))
+	// fmt.Printf("%q notificó a %q con el mensaje: %q", message["origin"].(*kqueue.Observable).Name, o.Name, message["message"].(string))
 	err := SendMessage(o.NotifyAddr, message)
 	if err != nil {
 		message["response_error"] = err.Error()
