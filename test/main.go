@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo"
-	kevents "github.com/pepelias/kernel/kqueue/client"
+	kevents "github.com/pepelias/kevents/client"
 )
 
 func main() {

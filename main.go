@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
-	kevents "github.com/pepelias/kernel/kevents/client"
+	kevents "github.com/pepelias/kevents/client"
 	"github.com/pepelias/tocopicadas/controllers/response"
 )
 
@@ -176,15 +177,10 @@ func dispatchRequest(c echo.Context) error {
 	}
 
 	// Proceder disparar
-	err = Dispatch(c.Param("EVENT"), data["data"].(map[string]interface{}), observable)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, response.Model{
-			Error: response.Error{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			},
-		})
-	}
+	defer func() {
+		fmt.Println("Se disparó")
+		go Dispatch(c.Param("EVENT"), data["data"].(map[string]interface{}), observable)
+	}()
 
 	return c.JSON(http.StatusOK, response.Model{
 		Ok: response.Ok{
