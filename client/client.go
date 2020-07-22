@@ -45,6 +45,7 @@ func ListenHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	fmt.Println(events)
 	fmt.Println(event.Event)
+	event.Data["Request"] = r
 	// Verificamos que estemos escuchando
 	if events[event.Event] != nil {
 		// Disparamos cada evento
