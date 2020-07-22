@@ -5,20 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	kevents "github.com/pepelias/kevents/client"
 	kqueue "github.com/pepelias/kevents/client"
 )
 
 // Event es una cola de mensajes
 type Event struct {
-	Name       string
-	Observable *kqueue.Observable
-	Observers  []*Observer
-	Createat   time.Time
+	Name       string `json:"_"`
+	Observable int    `json:"observable"`
+	Observers  []int  `json:"observers"`
 }
 
 // Observer .
@@ -29,57 +28,23 @@ type Observer struct {
 	Queue      []map[string]interface{} `json:"queue,omitempty"`
 }
 
-// Events son colas indexadas
-var Events = map[string]*Event{}
-
-// Suscribe .
-func Suscribe(event string, o *Observer) error {
-	if Events[event] == nil || Events[event].Observable == nil {
-		return fmt.Errorf("No existe este evento")
-	}
-	err := Events[event].Suscribe(o)
-	return err
-}
-
-// CreateEvent .
-func CreateEvent(event string, own *kqueue.Observable) error {
-	if own == nil {
-		return fmt.Errorf("Se necesita un observable")
-	}
-	if Events[event] != nil && Events[event].Observable != nil {
-		return fmt.Errorf("El evento ya existe")
-	}
-	if Events[event] != nil {
-		Events[event].Observable = own
-		return nil
-	}
-	Events[event] = &Event{
-		Name:       event,
-		Observable: own,
-		Createat:   time.Now(),
-	}
-	defer saveRecovery()
-	return nil
+// Database .
+var Database = struct {
+	Events      map[string]*Event     `json:"events"`
+	Observers   []*Observer           `json:"observers"`
+	Observables []*kevents.Observable `json:"observables"`
+}{
+	Events:      map[string]*Event{},
+	Observers:   make([]*Observer, 0),
+	Observables: make([]*kevents.Observable, 0),
 }
 
 // Dispatch .
 func Dispatch(event string, data map[string]interface{}, own *kqueue.Observable) error {
-	if Events[event] == nil {
+	if Database.Events[event] == nil || len(Database.Events[event].Observers) == 0 {
 		return fmt.Errorf("No hay suscritos al evento")
 	}
-	Events[event].NotifyObservers(data)
-	return nil
-}
-
-// Suscribe to Event
-func (q *Event) Suscribe(o *Observer) error {
-	for _, ob := range q.Observers {
-		if ob.NotifyAddr == o.NotifyAddr {
-			return fmt.Errorf("Esta dirección de notificación ya está registrada para este evento")
-		}
-	}
-	q.Observers = append(q.Observers, o)
-	defer saveRecovery()
+	Database.Events[event].NotifyObservers(data)
 	return nil
 }
 
@@ -93,11 +58,12 @@ func (q *Event) NotifyObservers(data map[string]interface{}) {
 		"sendedat": time.Now(),
 	}
 	for _, o := range q.Observers {
-		err := o.Notify(msg)
+		ob := Database.Observers[o]
+		err := ob.Notify(msg)
 		if err != nil {
 			fmt.Printf("[ERROR]: %q \n", err.Error())
 		} else {
-			fmt.Printf("[SUCCESS]: %q \n", o.NotifyAddr)
+			fmt.Printf("[SUCCESS]: %q \n", ob.NotifyAddr)
 		}
 	}
 }
@@ -111,7 +77,6 @@ func (o *Observer) Notify(message map[string]interface{}) error {
 		o.Queue = append(o.Queue, message)
 		return err
 	}
-	// TODO: Si falla debe agregarse al queue
 	return nil
 }
 
@@ -145,12 +110,12 @@ func SendMessage(destination string, content map[string]interface{}) error {
 	if res.StatusCode >= 200 && res.StatusCode < 300 {
 		return nil
 	}
-	return fmt.Errorf("Falló envío: Código de respuesta: %q", strconv.Itoa(res.StatusCode))
+	return fmt.Errorf("[Error]: %q", strconv.Itoa(res.StatusCode))
 }
 
 // MakeRecovery .
 func MakeRecovery() error {
-	data, err := json.Marshal(Events)
+	data, err := json.Marshal(Database)
 	if err != nil {
 		return err
 	}
@@ -168,18 +133,12 @@ func GetRecovery() error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &Events)
+	err = json.Unmarshal(data, &Database)
+	for name, event := range Database.Events {
+		event.Name = name
+	}
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func saveRecovery() {
-	err := MakeRecovery()
-	if err != nil {
-		log.Printf("Error al crear copia: %q", err.Error())
-		return
-	}
-	log.Printf("Copia generada con éxito!")
 }

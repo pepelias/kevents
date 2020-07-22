@@ -18,10 +18,6 @@ func main() {
 		log.Fatalf("Error: %q", err)
 	}
 	e := echo.New()
-	// Suscribirse a un evento
-	e.POST("/:EVENT/suscribe", suscribeRequest)
-	// Crear un evento
-	e.POST("/:EVENT/create", createRequest)
 	// Disparar event
 	e.POST("/:EVENT", dispatchRequest)
 
@@ -45,95 +41,6 @@ func main() {
 	})
 
 	e.Start(":8080")
-}
-
-// Suscribirse por HTTP
-func suscribeRequest(c echo.Context) error {
-	observer := &Observer{}
-	err := json.NewDecoder(c.Request().Body).Decode(observer)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.Model{
-			Error: response.Error{
-				Code:    http.StatusBadRequest,
-				Message: "El body tiene un formato incorrecto",
-			},
-		})
-	}
-	// Verificar que estén todos los datos
-	if observer.Name == "" || observer.Email == "" || observer.NotifyAddr == "" {
-		return c.JSON(http.StatusBadRequest, response.Model{
-			Error: response.Error{
-				Code:    http.StatusBadRequest,
-				Message: "Estructura de datos incorrecta. Asegurese de enviar su nombre, email y dirección URL.",
-			},
-		})
-	}
-
-	// Proceder a crear el evento
-	err = Suscribe(c.Param("EVENT"), observer)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, response.Model{
-			Error: response.Error{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			},
-		})
-	}
-
-	return c.JSON(http.StatusOK, response.Model{
-		Ok: response.Ok{
-			Code:    http.StatusOK,
-			Message: "Suscrito al evento con éxito",
-		},
-		Data: map[string]interface{}{
-			"name": c.Param("EVENT"),
-		},
-	})
-}
-
-// Crear por HTTP
-func createRequest(c echo.Context) error {
-	observable := &kevents.Observable{}
-	err := json.NewDecoder(c.Request().Body).Decode(observable)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.Model{
-			Error: response.Error{
-				Code:    http.StatusBadRequest,
-				Message: "El body tiene un formato incorrecto",
-			},
-		})
-	}
-	// Verificar que estén todos los datos
-	if observable.Name == "" || observable.Email == "" || observable.Addr == "" {
-		return c.JSON(http.StatusBadRequest, response.Model{
-			Error: response.Error{
-				Code:    http.StatusBadRequest,
-				Message: "Estructura de datos incorrecta. Asegurese de enviar su nombre, email y dirección URL.",
-			},
-		})
-	}
-
-	// Proceder a crear el evento
-	err = CreateEvent(c.Param("EVENT"), observable)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, response.Model{
-			Error: response.Error{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			},
-		})
-	}
-
-	return c.JSON(http.StatusCreated, response.Model{
-		Ok: response.Ok{
-			Code:    http.StatusCreated,
-			Message: "Evento creado con éxito!",
-		},
-		Data: map[string]interface{}{
-			"name":     c.Param("EVENT"),
-			"createat": Events[c.Param("EVENT")].Createat,
-		},
-	})
 }
 
 // Disparar por HTTP
