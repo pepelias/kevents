@@ -15,7 +15,7 @@ import (
 
 // Event es una cola de mensajes
 type Event struct {
-	Name       string `json:"_"`
+	Name       string `json:"-"`
 	Observable int    `json:"observable"`
 	Observers  []int  `json:"observers"`
 }
