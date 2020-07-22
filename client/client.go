@@ -39,6 +39,7 @@ func ListenHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	event := &Event{}
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
+		fmt.Println("Falló la decodificación")
 		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Fprintf(w, "{message: \"Internal Server error\"}")
 	}

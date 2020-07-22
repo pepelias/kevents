@@ -41,6 +41,8 @@ var Database = struct {
 
 // Dispatch .
 func Dispatch(event string, data map[string]interface{}, own *kqueue.Observable) error {
+	fmt.Println("Disparando...")
+	fmt.Println(event, data, own)
 	if Database.Events[event] == nil || len(Database.Events[event].Observers) == 0 {
 		return fmt.Errorf("No hay suscritos al evento")
 	}
@@ -53,7 +55,7 @@ func (q *Event) NotifyObservers(data map[string]interface{}) {
 	delete(data, "response_error")
 	msg := map[string]interface{}{
 		"event":    q.Name,
-		"origin":   q.Observable,
+		"origin":   Database.Observables[q.Observable],
 		"data":     data,
 		"sendedat": time.Now(),
 	}

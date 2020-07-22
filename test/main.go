@@ -10,22 +10,27 @@ import (
 func main() {
 	e := echo.New()
 	e.POST("/events", func(c echo.Context) error {
+		fmt.Println("Recibimos un evento!")
 		_, err := kevents.ListenHandler(c.Response().Writer, c.Request())
 		return err
 	})
-
-	kevents.On("streaming-start", func(info map[string]interface{}) {
-		fmt.Println("Inició el streaming")
-		fmt.Printf("El streaming %q ya comenzó", info["streaming_id"].(string))
+	fmt.Println("Ejecutandose!")
+	kevents.On("LiveGo-connected", func(info map[string]interface{}) {
+		fmt.Println("Se conectó el stream")
+		fmt.Println(info)
+	})
+	kevents.On("LiveGo-disconnected", func(info map[string]interface{}) {
+		fmt.Println("Se desconectó el stream")
+		fmt.Println(info)
+	})
+	kevents.On("LiveGo-end-stream", func(info map[string]interface{}) {
+		fmt.Println("Terminó un stream")
+		fmt.Println(info)
 	})
 
 	kevents.Me.Name = "José Avello"
 	kevents.Me.Email = "j.avellogomez@gmail.com"
 	kevents.Me.Addr = "https://jovenescp.cl"
 
-	err := kevents.Notify("streaming-start", struct{ Message string }{"Hola Mundo!"})
-	if err != nil {
-		fmt.Println(err)
-	}
 	e.Start(":8085")
 }
